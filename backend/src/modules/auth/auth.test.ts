@@ -5,9 +5,9 @@ import app from "../../app";
 import prisma from "../../lib/prisma";
 
 describe("Auth Module", () => {
-  const adminEmail = "admin@test.com";
+  const adminEmail = "auth-admin@test.com";
   const adminPassword = "admin123";
-  const teamEmail = "team@test.com";
+  const teamEmail = "auth-team@test.com";
   const teamPassword = "team123";
 
   beforeAll(async () => {
@@ -39,7 +39,7 @@ describe("Auth Module", () => {
 
     // Create team + team user
     const team = await prisma.team.create({
-      data: { name: "Test Team", money: 10000 },
+      data: { name: "Auth Test Team", money: 10000 },
     });
 
     const teamHash = await bcrypt.hash(teamPassword, 10);
@@ -76,7 +76,7 @@ describe("Auth Module", () => {
       expect(res.status).toBe(200);
       expect(res.body.accessToken).toBeDefined();
       expect(res.body.user.role).toBe("TEAM");
-      expect(res.body.user.teamName).toBe("Test Team");
+      expect(res.body.user.teamName).toBe("Auth Test Team");
     });
 
     it("should reject wrong password", async () => {
@@ -148,7 +148,7 @@ describe("Auth Module", () => {
       expect(res.status).toBe(200);
       expect(res.body.email).toBe(teamEmail);
       expect(res.body.role).toBe("TEAM");
-      expect(res.body.teamName).toBe("Test Team");
+      expect(res.body.teamName).toBe("Auth Test Team");
       expect(res.body.money).toBe(10000);
     });
 
