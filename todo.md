@@ -3,78 +3,78 @@
 --------------------------------------------------
 PHASE 1 – PLANNING
 --------------------------------------------------
-- [ ] Finalize bidding rules
-- [ ] Decide tech stack
-- [ ] Decide authentication method
-- [ ] Decide DB schema
-- [ ] Decide timer strategy (Server based)
+- [x] Finalize bidding rules
+- [x] Decide tech stack
+- [x] Decide authentication method
+- [x] Decide DB schema
+- [x] Decide timer strategy (Server based)
 
 --------------------------------------------------
 PHASE 2 – BACKEND CORE
 --------------------------------------------------
 
 ## AUTH APIs
-- [ ] POST /api/auth/login
-- [ ] POST /api/auth/logout
-- [ ] POST /api/auth/refresh
-- [ ] GET  /api/auth/me
+- [x] POST /api/auth/login
+- [x] POST /api/auth/logout
+- [x] POST /api/auth/refresh
+- [x] GET  /api/auth/me
 
 --------------------------------------------------
 
 ## TEAM APIs
-- [ ] GET  /api/team/profile
-- [ ] GET  /api/team/money
-- [ ] GET  /api/team/status
-- [ ] GET  /api/team/history
-- [ ] PATCH /api/team/eliminate
+- [x] GET  /api/team/profile
+- [x] GET  /api/team/money
+- [x] GET  /api/team/status
+- [x] GET  /api/team/history
+- [x] PATCH /api/team/eliminate
 
 --------------------------------------------------
 
 ## ADMIN APIs
-- [ ] POST /api/admin/create-team
-- [ ] GET  /api/admin/teams
-- [ ] PATCH /api/admin/team-money
-- [ ] DELETE /api/admin/team
-- [ ] GET /api/admin/bids/live
+- [x] POST /api/admin/create-team
+- [x] GET  /api/admin/teams
+- [x] PATCH /api/admin/team-money
+- [x] DELETE /api/admin/team
+- [x] GET /api/admin/bids/live
 
 --------------------------------------------------
 
 ## ITEM APIs
-- [ ] POST /api/item/create
-- [ ] GET  /api/item/current
-- [ ] GET  /api/item/all
-- [ ] PATCH /api/item/update
-- [ ] DELETE /api/item/delete
+- [x] POST /api/item/create
+- [x] GET  /api/item/current
+- [x] GET  /api/item/all
+- [x] PATCH /api/item/update
+- [x] DELETE /api/item/delete
 
 --------------------------------------------------
 
 ## AUCTION APIs
-- [ ] POST /api/auction/start
-- [ ] POST /api/auction/stop
-- [ ] GET  /api/auction/status
-- [ ] GET  /api/auction/timer
-- [ ] GET  /api/auction/result
-- [ ] POST /api/auction/restart
+- [x] POST /api/auction/start
+- [x] POST /api/auction/stop
+- [x] GET  /api/auction/status
+- [x] GET  /api/auction/timer
+- [x] GET  /api/auction/result
+- [x] POST /api/auction/restart
 
 --------------------------------------------------
 
 ## BID APIs
-- [ ] POST /api/bid/place
-- [ ] PATCH /api/bid/update
-- [ ] GET  /api/bid/current-highest
-- [ ] GET  /api/bid/team
-- [ ] GET  /api/bid/history
+- [x] POST /api/bid/place
+- [x] PATCH /api/bid/update
+- [x] GET  /api/bid/current-highest
+- [x] GET  /api/bid/team
+- [x] GET  /api/bid/history
 
 --------------------------------------------------
 
 ## REALTIME (SOCKET EVENTS)
-- [ ] auction:start
-- [ ] auction:timer
-- [ ] bid:update
-- [ ] bid:highest
-- [ ] auction:finalPhase
-- [ ] auction:result
-- [ ] team:eliminated
+- [x] auction:start
+- [x] auction:timer
+- [x] bid:update
+- [x] bid:highest
+- [x] auction:finalPhase
+- [x] auction:result
+- [x] team:eliminated
 
 --------------------------------------------------
 
@@ -82,70 +82,70 @@ PHASE 3 – FRONTEND PAGES
 --------------------------------------------------
 
 ## PUBLIC
-- [ ] Login Page
-- [ ] 404 Page
+- [x] Login Page
+- [x] 404 Page
 
 --------------------------------------------------
 
 ## TEAM PAGES
-- [ ] Team Dashboard
-- [ ] Live Auction Screen
-- [ ] Bid Update Modal
-- [ ] Result Screen
-- [ ] History Page
-- [ ] Eliminated Screen
+- [x] Team Dashboard
+- [x] Live Auction Screen
+- [x] Bid Update Modal
+- [x] Result Screen
+- [x] History Page
+- [x] Eliminated Screen
 
 --------------------------------------------------
 
 ## ADMIN PAGES
-- [ ] Admin Login
-- [ ] Admin Dashboard
-- [ ] Team Management Page
-- [ ] Create Team Page
-- [ ] Item Management Page
-- [ ] Create Item Page
-- [ ] Live Bidding Monitor
-- [ ] Auction Control Panel
+- [x] Admin Login
+- [x] Admin Dashboard
+- [x] Team Management Page
+- [x] Create Team Page
+- [x] Item Management Page
+- [x] Create Item Page
+- [x] Live Bidding Monitor
+- [x] Auction Control Panel
 - [ ] Bid Logs Page
 
 --------------------------------------------------
 
 PHASE 4 – UI COMPONENTS
 --------------------------------------------------
-- [ ] Navbar
+- [x] Navbar
 - [ ] Sidebar
-- [ ] Timer Component
+- [x] Timer Component
 - [ ] Bid Card
 - [ ] Team Card
 - [ ] Modal
-- [ ] Toast Notifications
-- [ ] Loader
-- [ ] Table
+- [x] Toast Notifications
+- [x] Loader
+- [x] Table
 - [ ] Pagination
 
 --------------------------------------------------
 
 PHASE 5 – AUCTION LOGIC
 --------------------------------------------------
-- [ ] 3-minute bidding timer
-- [ ] Reveal highest bid
-- [ ] 1-minute rebid phase
-- [ ] Timestamp conflict resolution
-- [ ] Winner calculation
-- [ ] Deduct winner money
-- [ ] Eliminate winner
-- [ ] Deduct 10% from losers
-- [ ] Broadcast results
+- [x] 3-minute bidding timer
+- [x] Reveal highest bid
+- [x] 1-minute rebid phase
+- [x] Timestamp conflict resolution
+- [x] Winner calculation
+- [x] Deduct winner money
+- [x] Eliminate winner
+- [x] Deduct 10% from losers
+- [x] Broadcast results
 
 --------------------------------------------------
 
 PHASE 6 – SECURITY
 --------------------------------------------------
-- [ ] Role based middleware
+- [x] Role based middleware
 - [ ] Rate limit bids
-- [ ] Prevent double submission
-- [ ] Validate timestamps
-- [ ] Secure cookies / tokens
+- [x] Prevent double submission
+- [x] Validate timestamps
+- [x] Secure cookies / tokens
 
 --------------------------------------------------
 
@@ -153,15 +153,15 @@ PHASE 7 – TESTING
 --------------------------------------------------
 - [ ] Concurrent bidding tests
 - [ ] Timer drift tests
-- [ ] Equal bid tests
-- [ ] Permission tests
-- [ ] Socket disconnect tests
+- [x] Equal bid tests
+- [x] Permission tests
+- [x] Socket disconnect tests
 
 --------------------------------------------------
 
 PHASE 8 – DEPLOYMENT
 --------------------------------------------------
-- [ ] Production DB
+- [x] Production DB (Docker Compose)
 - [ ] CI/CD
 - [ ] Monitoring
 - [ ] Logging
