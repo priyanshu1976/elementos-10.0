@@ -7,6 +7,7 @@ import teamRoutes from "./modules/team/team.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import itemRoutes from "./modules/item/item.routes";
 import auctionRoutes from "./modules/auction/auction.routes";
+import bidRoutes from "./modules/bid/bid.routes";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/api/team", teamRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/item", itemRoutes);
 app.use("/api/auction", auctionRoutes);
+app.use("/api/bid", bidRoutes);
 
 // Error handler
 app.use(
