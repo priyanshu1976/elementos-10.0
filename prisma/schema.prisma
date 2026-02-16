@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEAM
+}
+
+enum ItemStatus {
+  PENDING
+  ACTIVE
+  SOLD
+}
+
+enum AuctionPhase {
+  OPEN
+  FINAL
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String? @unique
+
+  refreshToken String?
+}
+
+model Team {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  money        Float   @default(10000)
+  isEliminated Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User?
+  bids Bid[]
+}
+
+model Item {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  basePrice   Float
+  status      ItemStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auctions Auction[]
+}
+
+model Auction {
+  id           String       @id @default(cuid())
+  phase        AuctionPhase @default(OPEN)
+  startTime    DateTime     @default(now())
+  endTime      DateTime
+  finalEndTime DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId String
+
+  bids Bid[]
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  amount    Float
+  timestamp DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId String
+
+  auction   Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auctionId String
+
+  @@unique([teamId, auctionId])
+}
