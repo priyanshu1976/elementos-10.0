@@ -6,6 +6,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import teamRoutes from "./modules/team/team.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import itemRoutes from "./modules/item/item.routes";
+import auctionRoutes from "./modules/auction/auction.routes";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/team", teamRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/item", itemRoutes);
+app.use("/api/auction", auctionRoutes);
 
 // Error handler
 app.use(
