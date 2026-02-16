@@ -1,5 +1,6 @@
 import prisma from "../../lib/prisma";
 import { BadRequestError, NotFoundError } from "../../lib/errors";
+import { emitBidUpdate } from "../../socket";
 
 export async function placeBid(teamId: string, amount: number) {
   // Find active auction
@@ -35,13 +36,17 @@ export async function placeBid(teamId: string, amount: number) {
     );
   }
 
-  return prisma.bid.create({
+  const bid = await prisma.bid.create({
     data: {
       teamId,
       auctionId: auction.id,
       amount,
     },
   });
+
+  emitBidUpdate({ teamName: team.name, amount, auctionId: auction.id });
+
+  return bid;
 }
 
 export async function updateBid(teamId: string, amount: number) {
@@ -72,10 +77,14 @@ export async function updateBid(teamId: string, amount: number) {
     throw new NotFoundError("No existing bid to update");
   }
 
-  return prisma.bid.update({
+  const bid = await prisma.bid.update({
     where: { id: existingBid.id },
     data: { amount, timestamp: new Date() },
   });
+
+  emitBidUpdate({ teamName: team.name, amount, auctionId: auction.id });
+
+  return bid;
 }
 
 export async function getCurrentHighest() {
