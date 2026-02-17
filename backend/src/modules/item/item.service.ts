@@ -5,6 +5,7 @@ import { ItemStatus } from "@prisma/client";
 export async function createItem(data: {
   title: string;
   description?: string;
+  imageUrl?: string;
   basePrice: number;
 }) {
   return prisma.item.create({ data });
@@ -23,7 +24,7 @@ export async function getAllItems() {
 
 export async function updateItem(
   itemId: string,
-  data: { title?: string; description?: string; basePrice?: number; status?: ItemStatus }
+  data: { title?: string; description?: string; imageUrl?: string; basePrice?: number; status?: ItemStatus }
 ) {
   const item = await prisma.item.findUnique({ where: { id: itemId } });
   if (!item) throw new NotFoundError("Item not found");

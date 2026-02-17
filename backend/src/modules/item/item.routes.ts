@@ -9,12 +9,14 @@ const router = Router();
 const createItemSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
+  imageUrl: z.string().url().optional(),
   basePrice: z.number().positive(),
 });
 
 const updateItemSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
+  imageUrl: z.string().url().optional().nullable(),
   basePrice: z.number().positive().optional(),
   status: z.enum(["PENDING", "ACTIVE", "SOLD"]).optional(),
 });

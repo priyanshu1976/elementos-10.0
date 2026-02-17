@@ -11,22 +11,46 @@ interface Item {
   status: string;
 }
 
+interface Team {
+  id: string;
+  name: string;
+  money: number;
+  isEliminated: boolean;
+}
+
 interface LiveBidData {
   auction: { id: string; phase: string; itemTitle: string } | null;
   bids: Array<{ id: string; teamName: string; amount: number; timestamp: string }>;
 }
 
+interface AuctionStatus {
+  active: boolean;
+  id?: string;
+  phase?: string;
+  itemTitle?: string;
+  itemImageUrl?: string | null;
+  paused?: boolean;
+  currentWinner?: string | null;
+}
+
 export default function AuctionControl() {
   const { socket } = useSocket();
   const [items, setItems] = useState<Item[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [selectedItem, setSelectedItem] = useState("");
-  const [auctionStatus, setAuctionStatus] = useState<any>(null);
+  const [auctionStatus, setAuctionStatus] = useState<AuctionStatus>({ active: false });
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [liveBids, setLiveBids] = useState<LiveBidData>({ auction: null, bids: [] });
   const [loading, setLoading] = useState(false);
 
+  // Bid form state
+  const [selectedTeam, setSelectedTeam] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+  const [bidLoading, setBidLoading] = useState(false);
+
   const fetchState = () => {
     api.get("/item/all").then((r) => setItems(r.data.filter((i: Item) => i.status !== "SOLD"))).catch(() => {});
+    api.get("/admin/teams").then((r) => setTeams(r.data.filter((t: Team) => !t.isEliminated))).catch(() => {});
     api.get("/auction/status").then((r) => setAuctionStatus(r.data)).catch(() => {});
     api.get("/auction/timer").then((r) => {
       if (r.data.active) setTimeRemaining(r.data.timeRemaining);
@@ -41,10 +65,28 @@ export default function AuctionControl() {
 
     socket.on("auction:timer", (data) => {
       setTimeRemaining(data.timeRemaining);
+      if (data.phase) {
+        setAuctionStatus((prev) => ({ ...prev, phase: data.phase }));
+      }
     });
 
     socket.on("auction:start", () => fetchState());
-    socket.on("auction:finalPhase", () => fetchState());
+    socket.on("auction:reveal", () => {
+      fetchState();
+      showToast("OPEN phase ended - Current winner revealed!", "success");
+    });
+    socket.on("auction:finalPhase", () => {
+      fetchState();
+      showToast("Final phase started!", "success");
+    });
+    socket.on("auction:paused", () => {
+      setAuctionStatus((prev) => ({ ...prev, paused: true }));
+      showToast("Auction paused", "success");
+    });
+    socket.on("auction:resumed", () => {
+      setAuctionStatus((prev) => ({ ...prev, paused: false }));
+      showToast("Auction resumed", "success");
+    });
     socket.on("auction:result", () => {
       fetchState();
       showToast("Auction completed!", "success");
@@ -56,7 +98,10 @@ export default function AuctionControl() {
     return () => {
       socket.off("auction:timer");
       socket.off("auction:start");
+      socket.off("auction:reveal");
       socket.off("auction:finalPhase");
+      socket.off("auction:paused");
+      socket.off("auction:resumed");
       socket.off("auction:result");
       socket.off("bid:update");
     };
@@ -89,6 +134,58 @@ export default function AuctionControl() {
     }
   };
 
+  const handlePause = async () => {
+    try {
+      await api.post("/auction/pause");
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Failed to pause", "error");
+    }
+  };
+
+  const handleResume = async () => {
+    try {
+      await api.post("/auction/resume");
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Failed to resume", "error");
+    }
+  };
+
+  const handleStartFinal = async () => {
+    setLoading(true);
+    try {
+      await api.post("/auction/start-final");
+      showToast("Final phase started!", "success");
+      fetchState();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlaceBid = async () => {
+    if (!selectedTeam || !bidAmount) return;
+    const amount = parseFloat(bidAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    setBidLoading(true);
+    try {
+      await api.post("/admin/bid/place", { teamId: selectedTeam, amount });
+      const team = teams.find((t) => t.id === selectedTeam);
+      showToast(`Bid placed for ${team?.name}: $${amount.toLocaleString()}`, "success");
+      setBidAmount("");
+      setSelectedTeam("");
+      api.get("/admin/bids/live").then((r) => setLiveBids(r.data)).catch(() => {});
+    } catch (err: any) {
+      showToast(err.response?.data?.error || "Bid failed", "error");
+    } finally {
+      setBidLoading(false);
+    }
+  };
+
+  const phase = auctionStatus.phase;
+  const isPaused = auctionStatus.paused;
+
   return (
     <div className="container page fade-in">
       <h1 style={{ marginBottom: "2rem" }}>Auction Control Panel</h1>
@@ -98,7 +195,7 @@ export default function AuctionControl() {
         <div className="card">
           <h3 style={{ marginBottom: "1rem" }}>Controls</h3>
 
-          {!auctionStatus?.active ? (
+          {!auctionStatus.active ? (
             <>
               <div style={{ marginBottom: "1rem" }}>
                 <label style={{ display: "block", marginBottom: "0.25rem", color: "var(--muted)", fontSize: "0.85rem" }}>
@@ -134,8 +231,48 @@ export default function AuctionControl() {
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Phase</div>
-                <span className="badge badge-success">{auctionStatus.phase}</span>
+                <span className={`badge ${phase === "REVEAL" ? "badge-warning" : "badge-success"}`}>
+                  {phase}{isPaused ? " (PAUSED)" : ""}
+                </span>
               </div>
+
+              {/* Current Winner (visible in REVEAL phase) */}
+              {phase === "REVEAL" && auctionStatus.currentWinner && (
+                <div style={{ marginBottom: "1rem", padding: "0.75rem", background: "var(--glass)", borderRadius: 8, textAlign: "center" }}>
+                  <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Current Winner</div>
+                  <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--accent)", marginTop: "0.25rem" }}>
+                    {auctionStatus.currentWinner}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                {/* Pause/Resume - only during OPEN or FINAL */}
+                {(phase === "OPEN" || phase === "FINAL") && (
+                  isPaused ? (
+                    <button className="btn btn-primary" onClick={handleResume} style={{ flex: 1 }}>
+                      Resume
+                    </button>
+                  ) : (
+                    <button className="btn" onClick={handlePause} style={{ flex: 1, background: "#EAB308", color: "#000" }}>
+                      Pause
+                    </button>
+                  )
+                )}
+
+                {/* Start Final Phase - only in REVEAL */}
+                {phase === "REVEAL" && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleStartFinal}
+                    disabled={loading}
+                    style={{ flex: 1 }}
+                  >
+                    {loading ? <span className="loader" /> : "Start Final Phase (1 min)"}
+                  </button>
+                )}
+              </div>
+
               <button
                 className="btn btn-danger"
                 onClick={handleStop}
@@ -150,8 +287,22 @@ export default function AuctionControl() {
 
         {/* Timer */}
         <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          {auctionStatus?.active ? (
-            <Timer timeRemaining={timeRemaining} phase={auctionStatus.phase} />
+          {auctionStatus.active && phase !== "REVEAL" ? (
+            <>
+              <Timer timeRemaining={timeRemaining} phase={phase || "OPEN"} />
+              {isPaused && (
+                <div style={{ marginTop: "0.5rem", color: "#EAB308", fontWeight: 600 }}>PAUSED</div>
+              )}
+            </>
+          ) : phase === "REVEAL" ? (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--accent)", marginBottom: "0.5rem" }}>
+                OPEN Phase Complete
+              </div>
+              <div style={{ color: "var(--muted)" }}>
+                Click "Start Final Phase" to begin the last 1 minute
+              </div>
+            </div>
           ) : (
             <div style={{ color: "var(--muted)", textAlign: "center" }}>
               <p>No active auction</p>
@@ -159,6 +310,54 @@ export default function AuctionControl() {
           )}
         </div>
       </div>
+
+      {/* Place Bid for Team - only during active auction */}
+      {auctionStatus.active && phase !== "CLOSED" && (
+        <div className="card" style={{ marginTop: "1.5rem" }}>
+          <h3 style={{ marginBottom: "1rem" }}>Place Bid for Team</h3>
+          <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: "0.25rem", color: "var(--muted)", fontSize: "0.85rem" }}>
+                Team
+              </label>
+              <select
+                className="input"
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+              >
+                <option value="">Select team...</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} (${team.money.toLocaleString()})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", marginBottom: "0.25rem", color: "var(--muted)", fontSize: "0.85rem" }}>
+                Amount
+              </label>
+              <input
+                type="number"
+                className="input mono"
+                placeholder="Bid amount"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                min="0"
+                step="100"
+              />
+            </div>
+            <button
+              className="btn btn-primary"
+              onClick={handlePlaceBid}
+              disabled={bidLoading || !selectedTeam || !bidAmount}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              {bidLoading ? <span className="loader" /> : "Place Bid"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Live bids */}
       <div className="card" style={{ marginTop: "1.5rem" }}>

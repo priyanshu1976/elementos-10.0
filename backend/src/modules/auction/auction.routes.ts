@@ -17,6 +17,9 @@ const restartSchema = z.object({
 // Admin-only
 router.post("/start", authenticate, requireRole("ADMIN"), validate(startSchema), auctionController.start);
 router.post("/stop", authenticate, requireRole("ADMIN"), auctionController.stop);
+router.post("/pause", authenticate, requireRole("ADMIN"), auctionController.pause);
+router.post("/resume", authenticate, requireRole("ADMIN"), auctionController.resume);
+router.post("/start-final", authenticate, requireRole("ADMIN"), auctionController.startFinal);
 router.post("/restart", authenticate, requireRole("ADMIN"), validate(restartSchema), auctionController.restart);
 
 // Authenticated

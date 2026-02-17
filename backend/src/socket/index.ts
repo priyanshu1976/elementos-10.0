@@ -53,18 +53,34 @@ export function initSocket(httpServer: HttpServer): Server {
     },
     onPhaseChange: (state: AuctionState) => {
       if (state.phase === "OPEN") {
-        io?.emit("auction:start", {
+        if (state.paused === true) {
+          io?.emit("auction:paused", { auctionId: state.auctionId, phase: state.phase });
+        } else if (state.paused === false) {
+          io?.emit("auction:resumed", { auctionId: state.auctionId, phase: state.phase });
+        } else {
+          io?.emit("auction:start", {
+            auctionId: state.auctionId,
+            itemId: state.itemId,
+            phase: state.phase,
+            timeRemaining: state.timeRemaining,
+          });
+        }
+      } else if (state.phase === "REVEAL") {
+        io?.emit("auction:reveal", {
           auctionId: state.auctionId,
-          itemId: state.itemId,
-          phase: state.phase,
-          timeRemaining: state.timeRemaining,
         });
       } else if (state.phase === "FINAL") {
-        io?.emit("auction:finalPhase", {
-          auctionId: state.auctionId,
-          phase: state.phase,
-          timeRemaining: state.timeRemaining,
-        });
+        if (state.paused === true) {
+          io?.emit("auction:paused", { auctionId: state.auctionId, phase: state.phase });
+        } else if (state.paused === false) {
+          io?.emit("auction:resumed", { auctionId: state.auctionId, phase: state.phase });
+        } else {
+          io?.emit("auction:finalPhase", {
+            auctionId: state.auctionId,
+            phase: state.phase,
+            timeRemaining: state.timeRemaining,
+          });
+        }
       } else if (state.phase === "CLOSED") {
         io?.emit("auction:closed", {
           auctionId: state.auctionId,

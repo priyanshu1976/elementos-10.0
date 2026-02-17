@@ -20,6 +20,33 @@ export async function stop(_req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function pause(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await auctionService.pause();
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resume(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await auctionService.resume();
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function startFinal(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await auctionService.startFinal();
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function status(
   _req: Request,
   res: Response,

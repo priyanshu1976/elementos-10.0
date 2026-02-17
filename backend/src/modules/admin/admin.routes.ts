@@ -20,10 +20,16 @@ const updateMoneySchema = z.object({
   money: z.number().min(0),
 });
 
+const placeBidSchema = z.object({
+  teamId: z.string().min(1),
+  amount: z.number().positive(),
+});
+
 router.post("/create-team", validate(createTeamSchema), adminController.createTeam);
 router.get("/teams", adminController.getTeams);
 router.patch("/team-money/:teamId", validate(updateMoneySchema), adminController.updateTeamMoney);
 router.delete("/team/:teamId", adminController.deleteTeam);
 router.get("/bids/live", adminController.getLiveBids);
+router.post("/bid/place", validate(placeBidSchema), adminController.placeBidForTeam);
 
 export default router;

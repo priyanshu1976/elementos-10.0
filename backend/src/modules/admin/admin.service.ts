@@ -69,10 +69,28 @@ export async function deleteTeam(teamId: string) {
   return prisma.team.delete({ where: { id: teamId } });
 }
 
-export async function getLiveBids() {
-  // Get the most recent active auction
+export async function placeBidForTeam(teamId: string, amount: number) {
+  const bidService = await import("../bid/bid.service");
+
+  // Check if team already has a bid - update instead of create
   const auction = await prisma.auction.findFirst({
-    where: { phase: { in: ["OPEN", "FINAL"] } },
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
+  });
+  if (!auction) throw new BadRequestError("No active auction");
+
+  const existingBid = await prisma.bid.findUnique({
+    where: { teamId_auctionId: { teamId, auctionId: auction.id } },
+  });
+
+  if (existingBid) {
+    return bidService.updateBid(teamId, amount);
+  }
+  return bidService.placeBid(teamId, amount);
+}
+
+export async function getLiveBids() {
+  const auction = await prisma.auction.findFirst({
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
     include: {
       item: true,
       bids: {

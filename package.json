@@ -8,6 +8,7 @@
     "build:backend": "npm run build --workspace=backend",
     "db:migrate": "npx prisma migrate dev --schema=prisma/schema.prisma",
     "db:generate": "npx prisma generate --schema=prisma/schema.prisma",
-    "db:push": "npx prisma db push --schema=prisma/schema.prisma"
+    "db:push": "npx prisma db push --schema=prisma/schema.prisma",
+    "db:seed": "npx tsx prisma/seed.ts"
   }
 }

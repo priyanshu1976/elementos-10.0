@@ -20,6 +20,7 @@ enum ItemStatus {
 
 enum AuctionPhase {
   OPEN
+  REVEAL
   FINAL
   CLOSED
 }
@@ -55,6 +56,7 @@ model Item {
   id          String     @id @default(cuid())
   title       String
   description String?
+  imageUrl    String?
   basePrice   Float
   status      ItemStatus @default(PENDING)
 

@@ -68,3 +68,17 @@ export async function getLiveBids(
     next(err);
   }
 }
+
+export async function placeBidForTeam(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { teamId, amount } = req.body;
+    const result = await adminService.placeBidForTeam(teamId, amount);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}

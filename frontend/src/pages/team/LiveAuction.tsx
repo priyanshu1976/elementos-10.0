@@ -10,12 +10,9 @@ interface AuctionStatus {
   id?: string;
   phase?: string;
   itemTitle?: string;
-}
-
-interface HighestBid {
-  amount: number;
-  teamName: string;
-  timestamp: string;
+  itemImageUrl?: string | null;
+  paused?: boolean;
+  currentWinner?: string | null;
 }
 
 export default function LiveAuction() {
@@ -23,10 +20,6 @@ export default function LiveAuction() {
   const { socket } = useSocket();
   const [auction, setAuction] = useState<AuctionStatus>({ active: false });
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [highest, setHighest] = useState<HighestBid | null>(null);
-  const [myBid, setMyBid] = useState<number | null>(null);
-  const [bidAmount, setBidAmount] = useState("");
-  const [bidLoading, setBidLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   // Fetch initial state
@@ -34,12 +27,6 @@ export default function LiveAuction() {
     api.get("/auction/status").then((r) => setAuction(r.data)).catch(() => {});
     api.get("/auction/timer").then((r) => {
       if (r.data.active) setTimeRemaining(r.data.timeRemaining);
-    }).catch(() => {});
-    api.get("/bid/current-highest").then((r) => {
-      if (r.data?.highest) setHighest(r.data.highest);
-    }).catch(() => {});
-    api.get("/bid/team").then((r) => {
-      if (r.data?.amount) setMyBid(r.data.amount);
     }).catch(() => {});
   }, []);
 
@@ -50,11 +37,8 @@ export default function LiveAuction() {
     socket.on("auction:start", (data) => {
       setAuction({ active: true, id: data.auctionId, phase: "OPEN", itemTitle: "" });
       setTimeRemaining(data.timeRemaining);
-      setHighest(null);
-      setMyBid(null);
       setResult(null);
       showToast("Auction started!", "success");
-      // Refetch auction status for item title
       api.get("/auction/status").then((r) => setAuction(r.data)).catch(() => {});
     });
 
@@ -65,19 +49,23 @@ export default function LiveAuction() {
       }
     });
 
+    socket.on("auction:reveal", () => {
+      api.get("/auction/status").then((r) => setAuction(r.data)).catch(() => {});
+      showToast("Bidding round complete!", "success");
+    });
+
     socket.on("auction:finalPhase", (data) => {
       setAuction((prev) => ({ ...prev, phase: "FINAL" }));
       setTimeRemaining(data.timeRemaining);
-      showToast("Final phase! Rebid now!", "success");
+      showToast("Final phase started!", "success");
     });
 
-    socket.on("bid:update", (data) => {
-      // Another team placed a bid
-      showToast(`${data.teamName} placed a bid`, "success");
+    socket.on("auction:paused", () => {
+      setAuction((prev) => ({ ...prev, paused: true }));
     });
 
-    socket.on("bid:highest", (data) => {
-      setHighest(data);
+    socket.on("auction:resumed", () => {
+      setAuction((prev) => ({ ...prev, paused: false }));
     });
 
     socket.on("auction:result", (data) => {
@@ -101,41 +89,21 @@ export default function LiveAuction() {
     return () => {
       socket.off("auction:start");
       socket.off("auction:timer");
+      socket.off("auction:reveal");
       socket.off("auction:finalPhase");
-      socket.off("bid:update");
-      socket.off("bid:highest");
+      socket.off("auction:paused");
+      socket.off("auction:resumed");
       socket.off("auction:result");
       socket.off("auction:closed");
       socket.off("team:eliminated");
     };
   }, [socket, user?.teamId, refreshUser]);
 
-  const handleBid = async (isUpdate: boolean) => {
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= 0) return;
-
-    setBidLoading(true);
-    try {
-      if (isUpdate) {
-        await api.patch("/bid/update", { amount });
-      } else {
-        await api.post("/bid/place", { amount });
-      }
-      setMyBid(amount);
-      setBidAmount("");
-      showToast(`Bid ${isUpdate ? "updated" : "placed"}: $${amount.toLocaleString()}`, "success");
-    } catch (err: any) {
-      showToast(err.response?.data?.error || "Bid failed", "error");
-    } finally {
-      setBidLoading(false);
-    }
-  };
-
   if (user?.isEliminated) {
     return (
       <div className="container page fade-in" style={{ textAlign: "center", paddingTop: "4rem" }}>
         <h1 style={{ color: "var(--danger)" }}>Eliminated</h1>
-        <p style={{ color: "var(--muted)", marginTop: "1rem" }}>You can no longer bid.</p>
+        <p style={{ color: "var(--muted)", marginTop: "1rem" }}>Your team has won an item and is no longer participating.</p>
       </div>
     );
   }
@@ -157,7 +125,7 @@ export default function LiveAuction() {
           {result.winner ? (
             <>
               <h2 style={{ color: "var(--success)", marginBottom: "1rem" }}>Winner</h2>
-              <p style={{ fontSize: "1.25rem" }}>{result.winner.teamName}</p>
+              <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>{result.winner.teamName}</p>
               <p className="mono" style={{ fontSize: "2rem", color: "var(--accent)", margin: "0.5rem 0" }}>
                 ${result.winner.amount.toLocaleString()}
               </p>
@@ -186,79 +154,74 @@ export default function LiveAuction() {
       <h1 style={{ marginBottom: "2rem", textAlign: "center" }}>Live Auction</h1>
 
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2rem" }}>
-        {/* Timer */}
-        <Timer timeRemaining={timeRemaining} phase={auction.phase || "OPEN"} />
+        {/* Timer - only show during OPEN and FINAL */}
+        {(auction.phase === "OPEN" || auction.phase === "FINAL") && (
+          <div style={{ textAlign: "center" }}>
+            <Timer timeRemaining={timeRemaining} phase={auction.phase} />
+            {auction.paused && (
+              <div style={{ marginTop: "0.5rem", color: "#EAB308", fontWeight: 600 }}>PAUSED</div>
+            )}
+          </div>
+        )}
 
         {/* Item info */}
         {auction.itemTitle && (
           <div className="card" style={{ textAlign: "center", width: "100%", maxWidth: "500px" }}>
+            {auction.itemImageUrl && (
+              <img
+                src={auction.itemImageUrl}
+                alt={auction.itemTitle}
+                style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 8, marginBottom: "0.75rem" }}
+              />
+            )}
             <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Current Item</div>
             <div style={{ fontSize: "1.25rem", fontWeight: 600, marginTop: "0.25rem" }}>{auction.itemTitle}</div>
           </div>
         )}
 
-        {/* Highest bid */}
+        {/* Phase status */}
         <div className="card" style={{ textAlign: "center", width: "100%", maxWidth: "500px" }}>
-          <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
-            {auction.phase === "OPEN" ? "Bids are hidden" : "Highest Bid"}
-          </div>
-          {auction.phase !== "OPEN" && highest ? (
+          {auction.phase === "OPEN" && (
             <>
-              <div className="mono pulse" style={{ fontSize: "2rem", color: "var(--accent)", marginTop: "0.5rem" }}>
-                ${highest.amount.toLocaleString()}
+              <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--accent)" }}>Bidding in Progress</div>
+              <div style={{ color: "var(--muted)", marginTop: "0.5rem" }}>
+                Teams are placing their bids with the admin
               </div>
-              <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>{highest.teamName}</div>
             </>
-          ) : (
-            <div style={{ color: "var(--muted)", marginTop: "0.5rem" }}>Will be revealed after OPEN phase</div>
+          )}
+
+          {auction.phase === "REVEAL" && (
+            <>
+              <div style={{ color: "var(--muted)", fontSize: "0.8rem", marginBottom: "0.5rem" }}>Current Leader</div>
+              {auction.currentWinner ? (
+                <div style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--accent)" }}>
+                  {auction.currentWinner}
+                </div>
+              ) : (
+                <div style={{ color: "var(--muted)" }}>No bids placed</div>
+              )}
+              <div style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.75rem" }}>
+                Waiting for final phase to begin...
+              </div>
+            </>
+          )}
+
+          {auction.phase === "FINAL" && (
+            <>
+              <div style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--danger)" }}>Final Phase</div>
+              <div style={{ color: "var(--muted)", marginTop: "0.5rem" }}>
+                Last chance to update bids!
+              </div>
+            </>
           )}
         </div>
 
-        {/* My bid */}
-        {myBid !== null && (
-          <div className="card" style={{ textAlign: "center", width: "100%", maxWidth: "500px" }}>
-            <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Your Bid</div>
-            <div className="mono" style={{ fontSize: "1.5rem", color: "var(--success)", marginTop: "0.25rem" }}>
-              ${myBid.toLocaleString()}
-            </div>
+        {/* Balance */}
+        <div className="card" style={{ textAlign: "center", width: "100%", maxWidth: "500px" }}>
+          <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Your Balance</div>
+          <div className="mono" style={{ fontSize: "1.5rem", color: "var(--success)", marginTop: "0.25rem" }}>
+            ${user?.money?.toLocaleString()}
           </div>
-        )}
-
-        {/* Bid form */}
-        <div className="card" style={{ width: "100%", maxWidth: "500px" }}>
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            <input
-              type="number"
-              className="input mono"
-              placeholder="Enter bid amount"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              min="0"
-              step="100"
-            />
-            {myBid === null ? (
-              <button
-                className="btn btn-primary"
-                onClick={() => handleBid(false)}
-                disabled={bidLoading || !bidAmount}
-                style={{ whiteSpace: "nowrap" }}
-              >
-                {bidLoading ? <span className="loader" /> : "Place Bid"}
-              </button>
-            ) : (
-              <button
-                className="btn btn-primary"
-                onClick={() => handleBid(true)}
-                disabled={bidLoading || !bidAmount}
-                style={{ whiteSpace: "nowrap" }}
-              >
-                {bidLoading ? <span className="loader" /> : "Update Bid"}
-              </button>
-            )}
-          </div>
-          <p style={{ color: "var(--muted)", fontSize: "0.75rem", marginTop: "0.5rem" }}>
-            Balance: <span className="mono">${user?.money?.toLocaleString()}</span>
-          </p>
         </div>
       </div>
     </div>

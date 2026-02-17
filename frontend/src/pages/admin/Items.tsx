@@ -6,6 +6,7 @@ interface Item {
   id: string;
   title: string;
   description: string | null;
+  imageUrl: string | null;
   basePrice: number;
   status: string;
 }
@@ -13,7 +14,7 @@ interface Item {
 export default function Items() {
   const [items, setItems] = useState<Item[]>([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", basePrice: "" });
+  const [form, setForm] = useState({ title: "", description: "", imageUrl: "", basePrice: "" });
   const [loading, setLoading] = useState(false);
 
   const fetchItems = () => {
@@ -29,10 +30,11 @@ export default function Items() {
       await api.post("/item/create", {
         title: form.title,
         description: form.description || undefined,
+        imageUrl: form.imageUrl || undefined,
         basePrice: parseFloat(form.basePrice),
       });
       showToast("Item created", "success");
-      setForm({ title: "", description: "", basePrice: "" });
+      setForm({ title: "", description: "", imageUrl: "", basePrice: "" });
       setShowCreate(false);
       fetchItems();
     } catch (err: any) {
@@ -76,6 +78,7 @@ export default function Items() {
           <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <input className="input" placeholder="Item title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             <input className="input" placeholder="Description (optional)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <input className="input" placeholder="Image URL (optional)" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
             <input className="input mono" type="number" placeholder="Base price" required value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} />
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? <span className="loader" /> : "Create"}
@@ -88,6 +91,7 @@ export default function Items() {
         <table className="table">
           <thead>
             <tr>
+              <th>Image</th>
               <th>Title</th>
               <th>Description</th>
               <th>Base Price</th>
@@ -98,6 +102,13 @@ export default function Items() {
           <tbody>
             {items.map((item) => (
               <tr key={item.id}>
+                <td>
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.title} style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6 }} />
+                  ) : (
+                    <div style={{ width: 48, height: 48, borderRadius: 6, background: "var(--glass)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: "0.7rem" }}>N/A</div>
+                  )}
+                </td>
                 <td style={{ fontWeight: 600 }}>{item.title}</td>
                 <td style={{ color: "var(--muted)" }}>{item.description || "—"}</td>
                 <td className="mono">${item.basePrice.toLocaleString()}</td>

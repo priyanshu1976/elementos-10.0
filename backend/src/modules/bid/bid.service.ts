@@ -5,7 +5,7 @@ import { emitBidUpdate } from "../../socket";
 export async function placeBid(teamId: string, amount: number) {
   // Find active auction
   const auction = await prisma.auction.findFirst({
-    where: { phase: { in: ["OPEN", "FINAL"] } },
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
     include: { item: true },
   });
   if (!auction) throw new BadRequestError("No active auction");
@@ -51,7 +51,7 @@ export async function placeBid(teamId: string, amount: number) {
 
 export async function updateBid(teamId: string, amount: number) {
   const auction = await prisma.auction.findFirst({
-    where: { phase: { in: ["OPEN", "FINAL"] } },
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
     include: { item: true },
   });
   if (!auction) throw new BadRequestError("No active auction");
@@ -89,7 +89,7 @@ export async function updateBid(teamId: string, amount: number) {
 
 export async function getCurrentHighest() {
   const auction = await prisma.auction.findFirst({
-    where: { phase: { in: ["OPEN", "FINAL"] } },
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
   });
   if (!auction) return null;
 
@@ -113,7 +113,7 @@ export async function getCurrentHighest() {
 
 export async function getTeamBid(teamId: string) {
   const auction = await prisma.auction.findFirst({
-    where: { phase: { in: ["OPEN", "FINAL"] } },
+    where: { phase: { in: ["OPEN", "REVEAL", "FINAL"] } },
   });
   if (!auction) return null;
 
