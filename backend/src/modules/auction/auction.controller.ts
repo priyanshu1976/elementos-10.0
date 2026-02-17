@@ -71,7 +71,7 @@ export async function timer(_req: Request, res: Response, next: NextFunction) {
 
 export async function result(req: Request, res: Response, next: NextFunction) {
   try {
-    const { auctionId } = req.params;
+    const auctionId = req.params.auctionId as string;
     const data = await auctionService.result(auctionId);
     res.json(data);
   } catch (err) {

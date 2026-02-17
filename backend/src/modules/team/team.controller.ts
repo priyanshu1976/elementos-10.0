@@ -64,7 +64,7 @@ export async function eliminate(
   next: NextFunction
 ) {
   try {
-    const { teamId } = req.params;
+    const teamId = req.params.teamId as string;
     const result = await teamService.eliminate(teamId);
     res.json({ message: "Team eliminated", team: result });
   } catch (err) {

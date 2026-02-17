@@ -33,7 +33,7 @@ export async function updateTeamMoney(
   next: NextFunction
 ) {
   try {
-    const { teamId } = req.params;
+    const teamId = req.params.teamId as string;
     const { money } = req.body;
     const result = await adminService.updateTeamMoney(teamId, money);
     res.json(result);
@@ -48,7 +48,7 @@ export async function deleteTeam(
   next: NextFunction
 ) {
   try {
-    const { teamId } = req.params;
+    const teamId = req.params.teamId as string;
     await adminService.deleteTeam(teamId);
     res.json({ message: "Team deleted" });
   } catch (err) {

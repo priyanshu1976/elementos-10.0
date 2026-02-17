@@ -65,7 +65,7 @@ export async function getBidHistory(
   next: NextFunction
 ) {
   try {
-    const { auctionId } = req.params;
+    const auctionId = req.params.auctionId as string;
     const result = await bidService.getBidHistory(auctionId);
     res.json(result);
   } catch (err) {

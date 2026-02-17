@@ -46,7 +46,7 @@ export async function updateItem(
   next: NextFunction
 ) {
   try {
-    const { itemId } = req.params;
+    const itemId = req.params.itemId as string;
     const result = await itemService.updateItem(itemId, req.body);
     res.json(result);
   } catch (err) {
@@ -60,7 +60,7 @@ export async function deleteItem(
   next: NextFunction
 ) {
   try {
-    const { itemId } = req.params;
+    const itemId = req.params.itemId as string;
     await itemService.deleteItem(itemId);
     res.json({ message: "Item deleted" });
   } catch (err) {
