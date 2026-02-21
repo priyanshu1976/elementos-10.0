@@ -26,10 +26,11 @@ jobs:
 
               cd elementos-10.0/
               git pull origin main
+              
+              npx prisma generate
 
               cd backend/
               npm install
-              npx prisma generate
               npm run build
 
               pm2 describe auction-backend || pm2 start dist/index.js --name auction-backend
