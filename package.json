@@ -3,12 +3,13 @@
   "private": true,
   "workspaces": ["backend", "frontend"],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
+    "dev:backend": "npm run dev --workspace=backend ",
     "test:backend": "npm run test --workspace=backend",
     "build:backend": "npm run build --workspace=backend",
     "db:migrate": "npx prisma migrate dev --schema=prisma/schema.prisma",
     "db:generate": "npx prisma generate --schema=prisma/schema.prisma",
     "db:push": "npx prisma db push --schema=prisma/schema.prisma",
-    "db:seed": "npx tsx prisma/seed.ts"
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:clean": "npx tsx prisma/clean.ts"
   }
 }

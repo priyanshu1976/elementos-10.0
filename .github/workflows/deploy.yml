@@ -1,0 +1,31 @@
+name: Deploy to AWS VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to AWS VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd kalinga-Backend
+            git pull origin main
+            npm install
+            npx prisma generate client
+            npm run build
+            pm2 describe kalinga || pm2 start dist/index.js --name kalinga
+            pm2 restart kalinga
+            pm2 describe attendanceWorker || pm2 start dist/workers/attendanceWorker.js --name attendanceWorker
+            pm2 restart attendanceWorker
