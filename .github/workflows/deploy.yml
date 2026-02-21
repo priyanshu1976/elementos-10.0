@@ -20,12 +20,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd kalinga-Backend
+            cd elementos-10.0/
             git pull origin main
             npm install
             npx prisma generate client
             npm run build
-            pm2 describe kalinga || pm2 start dist/index.js --name kalinga
-            pm2 restart kalinga
-            pm2 describe attendanceWorker || pm2 start dist/workers/attendanceWorker.js --name attendanceWorker
-            pm2 restart attendanceWorker
+            pm2 describe auction-backend || pm2 start dist/index.js --name auction-backend
+            pm2 restart auction-backend

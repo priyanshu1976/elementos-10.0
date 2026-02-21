@@ -18,7 +18,7 @@ app.use(cookieParser());
 
 // General rate limit: 100 requests per 15 minutes per IP
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok!" });
 });
 
 app.use("/api/auth", authRoutes);
