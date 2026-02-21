@@ -10,6 +10,7 @@ interface AuctionStatus {
   id?: string;
   phase?: string;
   itemTitle?: string;
+  itemDescription?: string | null;
   itemImageUrl?: string | null;
   paused?: boolean;
   currentWinner?: string | null;
@@ -176,6 +177,9 @@ export default function LiveAuction() {
             )}
             <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>Current Item</div>
             <div style={{ fontSize: "1.25rem", fontWeight: 600, marginTop: "0.25rem" }}>{auction.itemTitle}</div>
+            {auction.itemDescription && (
+              <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: "0.5rem" }}>{auction.itemDescription}</div>
+            )}
           </div>
         )}
 

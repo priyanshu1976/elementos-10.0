@@ -55,6 +55,7 @@ export async function status() {
     id: auction.id,
     phase: auction.phase,
     itemTitle: auction.item.title,
+    itemDescription: auction.item.description,
     itemImageUrl: auction.item.imageUrl,
     startTime: auction.startTime,
     endTime: auction.endTime,
